@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="el">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Διαχείριση Πελατών</title>
+    <style>
+      /* Προσθήκη στυλ για καλύτερη εμφάνιση */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin: 0;
+        padding: 0;
+      }
+      
+      .form-container {
+        width: 40%;
+        margin: 20px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      
+      .table-container {
+        width: 50%;
+        margin: 20px auto;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      
+      h1,
+      h2 {
+        text-align: center;
+        color: #333;
+      }
+      
+      label {
+        display: block;
+        margin-bottom: 5px;
+        color: #666;
+      }
+      
+      input[type='text'],
+      input[type='date'],
+      select {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      
+      input[type='submit'],
+      input[type='reset'],
+      button {
+        width: 48%;
+        padding: 8px;
+        margin-bottom: 8px;
+        border: none;
+        border-radius: 4px;
+        background-color: #4caf50;
+        color: #fff;
+        cursor: pointer;
+      }
+      
+      input[type='reset'] {
+        background-color: #f44336;
+      }
+      
+      button.delete {
+        background-color: #f44336;
+      }
+      
+      .button-group {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+      }
+      
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+      
+      table,
+      th,
+      td {
+        border: 1px solid #ddd;
+      }
+      
+      th,
+      td {
+        padding: 12px;
+        text-align: center;
+      }
+      
+      th {
+        background-color: #f2f2f2;
+      }
+      
+      .error-box {
+        background-color: #f44336;
+        color: white;
+        text-align: center;
+        padding: 10px;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 5px;
+        z-index: 1000;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Νέο διαμέρισμα για τα μηνύματα λάθους -->
+    <div id="error-box" class="error-box"></div>
+
+    <div class="form-container">
+      <h1>Διαχείριση Πελατών</h1>
+      <form action="/submit-form" method="post">
+        <label for="id_number">Αριθμός ταυτότητας:</label>
+        <input type="text" id="id_number" name="id_number" required />
+        <span class="error-message" id="id_number_error"></span>
+
+        <label for="first_name">Όνομα:</label>
+        <input type="text" id="first_name" name="first_name" />
+        <span class="error-message" id="first_name_error"></span>
+
+        <label for="last_name">Επίθετο:</label>
+        <input type="text" id="last_name" name="last_name" />
+        <span class="error-message" id="last_name_error"></span>
+
+        <label for="gender">Φύλο:</label>
+        <select id="gender" name="gender">
+          <option value="Male">Άνδρας</option>
+          <option value="Female">Γυναίκα</option>
+        </select>
+        <span class="error-message" id="gender_error"></span>
+
+        <label for="birth_date">Ημερ. Γέννησης:</label>
+        <input type="date" id="birth_date" name="birth_date" />
+        <span class="error-message" id="birth_date_error"></span>
+
+        <label for="addresses">Διεύθυνση:</label>
+        <input type="text" id="addresses" name="addresses" />
+        <span class="error-message" id="addresses_error"></span>
+
+        <label for="phone_numbers">Τηλέφωνο:</label>
+        <input type="text" id="phone_numbers" name="phone_numbers" />
+        <span class="error-message" id="phone_numbers_error"></span>
+        <!-- Κουμπιά -->
+        <div class="button-group">
+          <input type="submit" name="submit" value="Εισαγωγή" />
+
+          <input type="reset" value="Επαναφορά" />
+        </div>
+      </form>
+
+      <!-- Νέα φόρμα για ανάγνωση, αναζήτηση και διαγραφή πελάτη -->
+      <form id="customer-action-form">
+        <label for="customer_action_id">Αναγνωριστικό Πελάτη:</label>
+        <input type="text" id="customer_action_id" name="customer_id" />
+        <div class="button-group">
+          <button type="button" onclick="handleCustomerAction('read')">Διάβασμα Πελάτη</button>
+          <button type="button" onclick="handleCustomerAction('search')">Αναζήτηση</button>
+          <button type="button" class="delete" onclick="handleCustomerAction('delete')">Διαγραφή</button>
+          <button type="button" onclick="updateCustomer()">Ενημέρωση Πελάτη</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Display customer data -->
+    <div class="table-container">
+      <h2>Λίστα Πελατών</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Αναγνωριστικό</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if customers %}
+            {% for customer in customers %}
+              <tr>
+                <td>{{ customer.id }}</td>
+                <!-- Εδώ εμφανίζεται το id του πελάτη -->
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="1">Δεν υπάρχουν πελάτες αυτή τη στιγμή.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+    <!-- Display customer data -->
+    <div class="table-container">
+      <h2>Στοιχεία Πελατών</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Αναγνωριστικό</th>
+            <th>Αριθμός Ταυτότητας</th>
+            <th>Όνομα</th>
+            <th>Επίθετο</th>
+            <th>Φύλο</th>
+            <th>Ημερ. Γέννησης</th>
+            <th>Ημερ. Εισόδου</th>
+            <th>Διευθύνσεις</th>
+            <th>Τηλέφωνα</th>
+          </tr>
+        </thead>
+        <tbody id="customer-data-tbody">
+          <!-- Εδώ θα εμφανίζονται τα δεδομένα του πελάτη ή οι εγγραφές από τη βάση -->
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      function handleCustomerAction(action) {
+        const customerId = document.getElementById('customer_action_id').value
+      
+        if (action === 'read') {
+          if (customerId) {
+            fetchCustomerData(customerId)
+          } else {
+            fetchAllCustomers()
+          }
+        } else if (action === 'search') {
+          const searchValue = document.getElementById('customer_action_id').value
+          if (searchValue) {
+            searchCustomers(searchValue)
+          } else {
+            showError('Παρακαλώ εισάγετε μια τιμή αναζήτησης.')
+          }
+        } else if (action === 'delete') {
+          if (customerId !== '') {
+            deleteCustomer(customerId)
+          } else {
+            alert('Παρακαλώ εισάγετε ένα αναγνωριστικό πελάτη.')
+          }
+        }
+      }
+      //Function to validate form
+      function validateForm() {
+        var idNumber = document.getElementById('id_number').value.trim()
+        var firstName = document.getElementById('first_name').value.trim()
+        var lastName = document.getElementById('last_name').value.trim()
+        var gender = document.getElementById('gender').value.trim()
+        var birthDate = document.getElementById('birth_date').value.trim()
+        var addresses = document.getElementById('addresses').value.trim()
+        var phoneNumbers = document.getElementById('phone_numbers').value.trim()
+      
+        var isValid = true
+      
+        if (idNumber === '') {
+          showError('id_number', 'Το πεδίο απαιτείται')
+          isValid = false
+        } else {
+          clearError('id_number')
+        }
+      
+        if (firstName === '') {
+          showError('first_name', 'Το πεδίο απαιτείται')
+          isValid = false
+        } else {
+          clearError('first_name')
+        }
+        if (lastName === '') {
+          showError('last_name', 'Το πεδίο απαιτείται')
+          isValid = false
+        } else {
+          clearError('last_name')
+        }
+      
+        if (gender === '') {
+          showError('gender', 'Το πεδίο απαιτείται')
+          isValid = false
+        } else {
+          clearError('gender')
+        }
+      
+        if (birthDate === '') {
+          showError('birth_date', 'Το πεδίο απαιτείται')
+          isValid = false
+        } else {
+          clearError('birth_date')
+        }
+      
+        if (addresses === '') {
+          showError('addresses', 'Το πεδίο απαιτείται')
+          isValid = false
+        } else {
+          clearError('addresses')
+        }
+      
+        if (phoneNumbers === '') {
+          showError('phone_numbers', 'Το πεδίο απαιτείται')
+          isValid = false
+        } else {
+          clearError('phone_numbers')
+        }
+      
+        return isValid
+      }
+      function searchCustomers(searchValue) {
+        fetch('/search_customer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ search_value: searchValue })
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const tbody = document.getElementById('customer-data-tbody')
+            tbody.innerHTML = ''
+            if (data.length === 0) {
+              showError('Δεν βρέθηκαν αποτελέσματα.')
+            } else {
+              data.forEach((customer) => {
+                tbody.innerHTML += `
+                                        <tr>
+                                          <td>${customer.id}</td>
+                                          <td>${customer.id_number}</td>
+                                          <td>${customer.first_name}</td>
+                                          <td>${customer.last_name}</td>
+                                          <td>${customer.gender}</td>
+                                          <td>${customer.birth_date}</td>
+                                          <td>${customer.entry_date}</td>
+                                          <td>${customer.addresses.join('<br>')}</td>
+                                          <td>${customer.phone_numbers.join('<br>')}</td>
+                                      </tr>
+                                  `
+              })
+            }
+          })
+      }
+      
+      function fetchCustomerData(customerId) {
+        fetch('/read_customer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ customer_id: customerId })
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              showError(data.error)
+            } else {
+              const tbody = document.getElementById('customer-data-tbody')
+              tbody.innerHTML = `
+                                      <tr>
+                                        <td>${data.id}</td>
+                                        <td>${data.id_number}</td>
+                                        <td>${data.first_name}</td>
+                                        <td>${data.last_name}</td>
+                                        <td>${data.gender}</td>
+                                        <td>${data.birth_date}</td>
+                                        <td>${data.entry_date}</td>
+                                        <td>${data.addresses.join('<br>')}</td>
+                                        <td>${data.phone_numbers.join('<br>')}</td>
+                                    </tr>
+                                `
+            }
+          })
+      }
+      
+      function fetchAllCustomers() {
+        fetch('/read_customer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ customer_id: null })
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const tbody = document.getElementById('customer-data-tbody')
+            tbody.innerHTML = '' // Αδειάζουμε το περιεχόμενο του πίνακα
+            data.forEach((customer) => {
+              tbody.innerHTML += `
+                          <tr>
+                              <td>${customer.id}</td>
+                              <td>${customer.id_number}</td>
+                              <td>${customer.first_name}</td>
+                              <td>${customer.last_name}</td>
+                              <td>${customer.gender}</td>
+                              <td>${customer.birth_date}</td>
+                              <td>${customer.entry_date}</td>
+                              <td>${customer.addresses.join('<br>')}</td>
+                              <td>${customer.phone_numbers.join('<br>')}</td>
+                          </tr>
+                      `
+            })
+          })
+      }
+      
+      function showError(message) {
+        const errorBox = document.getElementById('error-box')
+        errorBox.textContent = message
+        errorBox.style.display = 'block'
+      
+        setTimeout(() => {
+          errorBox.style.display = 'none'
+        }, 3000)
+      }
+      function deleteCustomer(customerId) {
+        var confirmation = confirm('Είστε σίγουρος ότι θέλετε να διαγράψετε αυτόν τον πελάτη;')
+      
+        if (confirmation) {
+          fetch('/delete-customer', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              customer_id: customerId
+            })
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.message && data.message.startsWith('Ο πελάτης διαγράφηκε με επιτυχία')) {
+                location.reload()
+              } else {
+                alert('Σφάλμα κατά τη διαγραφή του πελάτη.')
+              }
+            })
+            .catch((error) => {
+              console.error('Error:', error)
+              alert('Σφάλμα κατά τη διαγραφή του πελάτη.')
+            })
+        }
+      }
+      function updateCustomer() {
+        const customerId = document.getElementById('customer_action_id').value.trim()
+        const firstName = document.getElementById('first_name').value.trim()
+        const lastName = document.getElementById('last_name').value.trim()
+        const gender = document.getElementById('gender').value
+        const birthDate = document.getElementById('birth_date').value.trim()
+        const addresses = document.getElementById('addresses').value.trim()
+        const phoneNumbers = document.getElementById('phone_numbers').value.trim()
+      
+        // Έλεγχος αν ο χρήστης προσπαθεί να αλλάξει το ID, την ημερομηνία εισαγωγής ή την ημερομηνία γέννησης
+        if (customerId === '') {
+          showError('Το πεδίο "Αναγνωριστικός Πελάτης" απαιτείται.')
+          return
+        }
+      
+        // Αποστολή αιτήματος ενημέρωσης στον διακομιστή
+        fetch('/update-customer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            customer_id: customerId,
+            first_name: firstName,
+            last_name: lastName,
+            gender: gender,
+            birth_date: birthDate,
+            addresses: addresses,
+            phone_numbers: phoneNumbers
+          })
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              showError(data.error)
+            } else {
+              // Επιτυχής ενημέρωση - επαναφόρτωση της σελίδας ή ενημέρωση των δεδομένων του πελάτη στην σελίδα
+              location.reload()
+            }
+          })
+          .catch((error) => {
+            console.error('Σφάλμα:', error)
+            showError('Σφάλμα κατά την ενημέρωση του πελάτη.')
+          })
+      
+        // Εμφάνιση δεδομένων πελάτη στη φόρμα επεξεργασίας
+        populateEditForm({
+          id: customerId,
+          first_name: firstName,
+          last_name: lastName,
+          gender: gender,
+          birth_date: birthDate,
+          addresses: addresses.split(', '),
+          phone_numbers: phoneNumbers.split(', ')
+        })
+      }
+      
+      function populateEditForm(customerData) {
+        // Εντοπίζουμε τα πεδία της φόρμας
+        const customerIdInput = document.getElementById('customer_action_id')
+        const firstNameInput = document.getElementById('first_name')
+        const lastNameInput = document.getElementById('last_name')
+        const genderInput = document.getElementById('gender')
+        const birthDateInput = document.getElementById('birth_date')
+        const addressesInput = document.getElementById('addresses')
+        const phoneNumbersInput = document.getElementById('phone_numbers')
+      
+        // Εμφανίζουμε τα δεδομένα του πελάτη στη φόρμα
+        customerIdInput.value = customerData.id
+        firstNameInput.value = customerData.first_name
+        lastNameInput.value = customerData.last_name
+        genderInput.value = customerData.gender
+        birthDateInput.value = customerData.birth_date
+        addressesInput.value = customerData.addresses.join(', ') // Μετατρέπουμε τον πίνακα σε συμβολοσειρά
+        phoneNumbersInput.value = customerData.phone_numbers.join(', ') // Μετατρέπουμε τον πίνακα σε συμβολοσειρά
+      }
+    </script>
+  </body>
+</html>
